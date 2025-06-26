@@ -27,9 +27,9 @@ export default defineSchema({
     items: v.array(
       v.object({
         name: v.string(),
-        quantity: v.string(),
-        unitPrice: v.string(),
-        totalPrice: v.string(),
+        quantity: v.number(),
+        unitPrice: v.number(),
+        totalPrice: v.number(),
       }),
     ),
   })

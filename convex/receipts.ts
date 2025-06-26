@@ -113,3 +113,76 @@ export const updateReceiptStatus = mutation({
         return true;
     }
 })
+
+// delete receipt
+export const deleteReceipt = mutation({
+    args:{
+        id: v.id("receipts")
+    },
+    handler: async (ctx,args) => {
+        const receipt = await ctx.db.get(args.id);
+        if(!receipt){
+            throw new Error("Receipt Not Found");
+        }
+        
+        const identity = await ctx.auth.getUserIdentity();
+        if(!identity){
+            throw new Error("Not Authenticated");
+        }
+
+        const userId = identity.subject;
+        if(receipt.userId !== userId){
+            throw new Error("Not Authorized to update receipt");
+        }
+
+        await ctx.storage.delete(receipt.fileId);
+        await ctx.db.delete(args.id);
+
+        return true;
+    }
+});
+
+export const updateReceiptwithExtractData = mutation({
+    args: {
+        id: v.id("receipts"),
+        fileDisplayName: v.string(),
+        merchantName: v.string(),
+        merchantAddress: v.string(),
+        merchantContact: v.string(),
+        transactionDate: v.string(),
+        transactionAmount: v.string(),
+        currency: v.string(),
+        receiptSummary: v.string(),
+        items: v.array(
+          v.object({
+            name: v.string(),
+            quantity: v.number(),
+            unitPrice: v.number(),
+            totalPrice: v.number(),
+          }),
+        ),
+      },
+      handler: async (ctx,args) => {
+        const receipt = await ctx.db.get(args.id);
+        if(!receipt){
+            throw new Error("Receipt Not Found");
+        }
+
+        await ctx.db.patch(args.id,{
+            fileDisplayName: args.fileDisplayName,
+            merchantName:args.merchantName,
+            merchantAddress:args.merchantAddress,
+            merchantContact: args.merchantContact,
+            transactionAmount: args.transactionAmount,
+            transactionDate: args.transactionDate,
+            currency: args.currency,
+            receiptSummary: args.receiptSummary,
+            items: args.items,
+            status: "processed",
+        });
+
+        return {
+            userId: receipt.userId
+        }
+      }
+})
